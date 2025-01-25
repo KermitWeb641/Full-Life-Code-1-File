@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zombie Apocalypse Map</title>
+  
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #222;
+      overflow: hidden;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .tile {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      background-size: cover;
+    }
+
+    /* Diverse Tile Styles */
+    .grass { background: linear-gradient(45deg, #4caf50, #50c878); } /* Grass */
+    .flower { background: url('https://via.placeholder.com/32x32?text=Flower') no-repeat center; background-size: cover; }
+    .tree { background: url('https://via.placeholder.com/32x32?text=Tree') no-repeat center; background-size: cover; }
+    .river { background: linear-gradient(45deg, #6baed6, #5fa3cc); } /* Water */
+    .mountain { background: linear-gradient(45deg, #8d8d8d, #9c9c9c); } /* Rock */
+    .snow { background: linear-gradient(45deg, #ffffff, #e8e8e8); } /* Snow */
+    .desert { background: linear-gradient(45deg, #e4d96f, #dfd27e); } /* Sand */
+
+    #player {
+      position: fixed;
+      width: 32px;
+      height: 32px;
+      background: red;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <div id="player"></div>
+
+  <script>
+    const gameContainer = document.getElementById('game-container');
+    const player = document.getElementById('player');
+
+    const mapSize = 300; // 300x300 tiles
+    const tileSize = 32; // Each tile is 32x32 pixels
+    const viewportSize = 20; // 20x20 tiles visible at any time
+    const playerPosition = { x: 4800, y: 4800 }; // Start in the center of a large map
+
+    const biomes = ['grass', 'flower', 'tree', 'river', 'mountain', 'snow', 'desert'];
+    const map = Array.from({ length: mapSize }, () =>
+      Array.from({ length: mapSize }, () => biomes[Math.floor(Math.random() * biomes.length)])
+    );
+
+    // Render tiles within the viewport
+    function renderTiles() {
+      gameContainer.innerHTML = ''; // Clear existing tiles
+      const startX = Math.floor(playerPosition.x / tileSize) - Math.floor(viewportSize / 2);
+      const startY = Math.floor(playerPosition.y / tileSize) - Math.floor(viewportSize / 2);
+
+      for (let y = 0; y < viewportSize; y++) {
+        for (let x = 0; x < viewportSize; x++) {
+          const mapX = startX + x;
+          const mapY = startY + y;
+
+          // Ensure map bounds are respected
+          if (mapX >= 0 && mapX < mapSize && mapY >= 0 && mapY < mapSize) {
+            const tile = document.createElement('div');
+            tile.className = `tile ${map[mapY][mapX]}`;
+            tile.style.left = `${x * tileSize}px`;
+            tile.style.top = `${y * tileSize}px`;
+            gameContainer.appendChild(tile);
+          }
+        }
+      }
+    }
+
+    // Player movement and rendering logic
+    const heldKeys = new Set();
+    document.addEventListener('keydown', (e) => heldKeys.add(e.key.toLowerCase()));
+    document.addEventListener('keyup', (e) => heldKeys.delete(e.key.toLowerCase()));
+
+    function movePlayer() {
+      const speed = 5;
+      const diagonalSpeed = Math.sqrt(speed * speed / 2);
+
+      let dx = 0, dy = 0;
+      if (heldKeys.has('w')) dy -= speed;
+      if (heldKeys.has('s')) dy += speed;
+      if (heldKeys.has('a')) dx -= speed;
+      if (heldKeys.has('d')) dx += speed;
+
+      // Normalize diagonal movement
+      if (dx !== 0 && dy !== 0) {
+        dx = dx > 0 ? diagonalSpeed : -diagonalSpeed;
+        dy = dy > 0 ? diagonalSpeed : -diagonalSpeed;
+      }
+
+      playerPosition.x += dx;
+      playerPosition.y += dy;
+
+      renderTiles();
+    }
+
+    // Game loop
+    function gameLoop() {
+      movePlayer();
+      requestAnimationFrame(gameLoop);
+    }
+
+    renderTiles(); // Initial render
+    gameLoop();
+  </script>
+</body>
+</html>
